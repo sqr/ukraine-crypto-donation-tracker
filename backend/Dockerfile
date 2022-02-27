@@ -8,6 +8,6 @@ RUN npm i
 
 COPY . .
 
-EXPOSE 3001
+EXPOSE 6001
 
 ENTRYPOINT ["node", "/app/index.js"]

@@ -44,3 +44,7 @@ h3 {
 a {
   color: white;
 }
+.tweet {
+  width: 500px;
+  margin: 20px;
+}

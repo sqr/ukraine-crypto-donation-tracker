@@ -17,10 +17,13 @@ export default function Home() {
       </div>
       <div className="center">
         <h2>Always double check target addresses when donating.</h2>
-        <TwitterTweetEmbed
-          tweetId={"1497594592438497282"}
-          options={{ theme: "dark" }}
-        />
+        <div className="tweet">
+          <TwitterTweetEmbed
+            tweetId={"1497594592438497282"}
+            width="1000px"
+            options={{ theme: "dark" }}
+          />
+        </div>
       </div>
     </div>
   );

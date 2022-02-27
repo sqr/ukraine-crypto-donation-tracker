@@ -24,11 +24,11 @@ services:
    depends_on:
     - mongo
 
-  # tasks:
-  #  image: tasks
-  #  build:
-  #   context: ./backend
-  #   dockerfile: Dockerfile-tasks
-  #  depends_on:
-  #   - mongo
-  #   - backend
+  tasks:
+   image: tasks
+   build:
+    context: ./backend
+    dockerfile: Dockerfile-tasks
+   depends_on:
+    - mongo
+    - backend

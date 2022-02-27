@@ -23,3 +23,21 @@ chain
   )
   // Every 5 mins
   .every(300000);
+
+chain
+  .add(
+    // Query API to insert BTC data in DB
+    () => {
+      axios.post(`${API_URL}/btcexchange`).then((res) => {
+        console.log(res.data);
+      });
+    },
+    // Query API to insert ETH data in DB
+    () => {
+      axios.post(`${API_URL}/ethexchange`).then((res) => {
+        console.log(res.data);
+      });
+    }
+  )
+  // Every 60 mins
+  .every(6000000);

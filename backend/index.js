@@ -1,7 +1,7 @@
 const express = require("express");
 const app = express();
 const mongoose = require("mongoose");
-const { Btc, Eth } = require("./model");
+const { Btc, Eth, BtcExchange, EthExchange } = require("./model");
 const { satToBtc, weiToEth } = require("./conversion");
 
 const axios = require("axios");
@@ -30,7 +30,31 @@ db.once("open", function () {
 db.on("error", console.error.bind(console, "MongoDB connection error:"));
 
 app.get("/test", (req, res) => {
-  res.json({ message: "Welcome to the application on port 3001." });
+  res.json({ message: "Welcome to the application on port 6001." });
+});
+
+app.get("/total", async (req, res) => {
+  const totalBtc = await Btc.findOne().sort({ createdAt: -1 });
+  const totalEth = await Eth.findOne().sort({ createdAt: -1 });
+  const rateBtc = await BtcExchange.findOne({ base: "btc" });
+  const rateEth = await EthExchange.findOne({ base: "eth" });
+  const usdDonations = {
+    btc: totalBtc.amount_btc * rateBtc.rate,
+    eth: totalEth.amount_eth * rateEth.rate,
+    total:
+      totalBtc.amount_btc * rateBtc.rate + totalEth.amount_eth * rateEth.rate,
+  };
+  res.json(usdDonations);
+});
+
+app.get("/btc", async (req, res) => {
+  const allBtc = await Btc.find();
+  res.json(allBtc);
+});
+
+app.get("/eth", async (req, res) => {
+  const allEth = await Eth.find();
+  res.json(allEth);
 });
 
 app.post("/btc", async (req, res) => {
@@ -83,6 +107,58 @@ app.post("/eth", async (req, res) => {
         } else {
           res.send(result);
         }
+      });
+    })
+    .catch((err) => {
+      console.log("Error: ", err.message);
+    });
+});
+
+app.post("/btcexchange", async (req, res) => {
+  const COINAPI_APIKEY = process.env.COINAPI_APIKEY;
+  let config = {
+    headers: {
+      "X-CoinAPI-Key": COINAPI_APIKEY,
+    },
+  };
+  axios
+    .get("https://rest.coinapi.io/v1/exchangerate/BTC/USD", config)
+    .then((res2) => {
+      console.log(res2.data);
+      // Store in db
+      const filter = { base: "btc", quote: "usd" };
+      const update = { rate: res2.data.rate };
+      BtcExchange.findOneAndUpdate(filter, update, {
+        new: true,
+        upsert: true, // Make this update into an upsert
+      }).then((res3) => {
+        res.send(res3);
+      });
+    })
+    .catch((err) => {
+      console.log("Error: ", err.message);
+    });
+});
+
+app.post("/ethexchange", async (req, res) => {
+  const COINAPI_APIKEY = process.env.COINAPI_APIKEY;
+  let config = {
+    headers: {
+      "X-CoinAPI-Key": COINAPI_APIKEY,
+    },
+  };
+  axios
+    .get("https://rest.coinapi.io/v1/exchangerate/ETH/USD", config)
+    .then((res2) => {
+      console.log(res2.data);
+      // Store in db
+      const filter = { base: "eth", quote: "usd" };
+      const update = { rate: res2.data.rate };
+      EthExchange.findOneAndUpdate(filter, update, {
+        new: true,
+        upsert: true, // Make this update into an upsert
+      }).then((res3) => {
+        res.send(res3);
       });
     })
     .catch((err) => {

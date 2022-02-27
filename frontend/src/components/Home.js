@@ -1,26 +1,27 @@
-import React, { useEffect, useState } from "react";
-import Graph from "./Graph";
+import React from "react";
+import GraphBtc from "./GraphBtc";
+import GraphEth from "./GraphEth";
+import TotalDonated from "./TotalDonated";
+
+import { TwitterTweetEmbed } from "react-twitter-embed";
 
 export default function Home() {
-  const API_SERVER = process.env.REACT_APP_API_URL;
-  console.log(API_SERVER);
-
-  const [data, setData] = useState("DONACIONES");
-  useEffect(() => {
-    const requestOptions = {
-      method: "GET",
-    };
-    fetch(`${API_SERVER}/test`, requestOptions)
-      .then((response) => response.json())
-      .then((data) => {
-        setData(data.message);
-      });
-  }, [API_SERVER]);
   return (
-    <div>
-      <h1>🇺🇦 Ukrania crypto donation tracker</h1>
-      <h2>{data}</h2>
-      <Graph />
+    <div className="wrapper">
+      <div className="center">
+        <TotalDonated />
+      </div>
+      <div className="graphs">
+        <GraphBtc />
+        <GraphEth />
+      </div>
+      <div className="center">
+        <h2>Always double check target addresses when donating.</h2>
+        <TwitterTweetEmbed
+          tweetId={"1497594592438497282"}
+          options={{ theme: "dark" }}
+        />
+      </div>
     </div>
   );
 }

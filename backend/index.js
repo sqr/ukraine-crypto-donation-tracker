@@ -57,61 +57,79 @@ app.get("/eth", async (req, res) => {
   res.json(allEth);
 });
 
+app.get("/pruebakey", async (req, res) => {
+  const { apiKey } = req.query;
+  if (apiKey === process.env.BACKEND_KEY) {
+    res.json({ message: "Authorized" });
+  } else {
+    res.sendStatus(401);
+  }
+});
+
 app.post("/btc", async (req, res) => {
-  // https://blockstream.info/api/address/357a3So9CbsNfBBgFYACGvxxS6tMaDoa1P
-  axios
-    .get(
-      "https://blockstream.info/api/address/357a3So9CbsNfBBgFYACGvxxS6tMaDoa1P"
-    )
-    .then((res2) => {
-      console.log(res2.data);
-      // Convert response amount (in Satoshis) to Btc
-      const amount_btc = satToBtc(res2.data.chain_stats.funded_txo_sum);
-      const data = {
-        address: res2.data.address,
-        amount_btc: amount_btc,
-        funded_txo_count: res2.data.chain_stats.funded_txo_count,
-      };
-      Btc.insertMany(data, function (err, result) {
-        if (err) {
-          res.send(err);
-        } else {
-          res.send(result);
-        }
+  const { apiKey } = req.query;
+
+  if (apiKey === process.env.BACKEND_KEY) {
+    axios
+      .get(
+        "https://blockstream.info/api/address/357a3So9CbsNfBBgFYACGvxxS6tMaDoa1P"
+      )
+      .then((res2) => {
+        console.log(res2.data);
+        // Convert response amount (in Satoshis) to Btc
+        const amount_btc = satToBtc(res2.data.chain_stats.funded_txo_sum);
+        const data = {
+          address: res2.data.address,
+          amount_btc: amount_btc,
+          funded_txo_count: res2.data.chain_stats.funded_txo_count,
+        };
+        Btc.insertMany(data, function (err, result) {
+          if (err) {
+            res.send(err);
+          } else {
+            res.send(result);
+          }
+        });
+      })
+      .catch((err) => {
+        console.log("Error: ", err.message);
       });
-    })
-    .catch((err) => {
-      console.log("Error: ", err.message);
-    });
+  } else {
+    res.sendStatus(401);
+  }
 });
 
 app.post("/eth", async (req, res) => {
-  // https://api.etherscan.io/api?module=account&action=balance&address=0x165CD37b4C644C2921454429E7F9358d18A45e14&tag=latest&apikey=
   const ETHERSCAN_APIKEY = process.env.ETHERSCAN_APIKEY;
+  const { apiKey } = req.query;
 
-  axios
-    .get(
-      `https://api.etherscan.io/api?module=account&action=balance&address=0x165CD37b4C644C2921454429E7F9358d18A45e14&tag=latest&apikey=${ETHERSCAN_APIKEY}`
-    )
-    .then((res2) => {
-      console.log(res2.data);
-      // Convert response amount (in wei) to Eth
-      const amount_eth = weiToEth(res2.data.result);
-      const data = {
-        address: "0x165CD37b4C644C2921454429E7F9358d18A45e14",
-        amount_eth: amount_eth,
-      };
-      Eth.insertMany(data, function (err, result) {
-        if (err) {
-          res.send(err);
-        } else {
-          res.send(result);
-        }
+  if (apiKey === process.env.BACKEND_KEY) {
+    axios
+      .get(
+        `https://api.etherscan.io/api?module=account&action=balance&address=0x165CD37b4C644C2921454429E7F9358d18A45e14&tag=latest&apikey=${ETHERSCAN_APIKEY}`
+      )
+      .then((res2) => {
+        console.log(res2.data);
+        // Convert response amount (in wei) to Eth
+        const amount_eth = weiToEth(res2.data.result);
+        const data = {
+          address: "0x165CD37b4C644C2921454429E7F9358d18A45e14",
+          amount_eth: amount_eth,
+        };
+        Eth.insertMany(data, function (err, result) {
+          if (err) {
+            res.send(err);
+          } else {
+            res.send(result);
+          }
+        });
+      })
+      .catch((err) => {
+        console.log("Error: ", err.message);
       });
-    })
-    .catch((err) => {
-      console.log("Error: ", err.message);
-    });
+  } else {
+    res.sendStatus(401);
+  }
 });
 
 app.post("/btcexchange", async (req, res) => {
@@ -121,23 +139,29 @@ app.post("/btcexchange", async (req, res) => {
       "X-CoinAPI-Key": COINAPI_APIKEY,
     },
   };
-  axios
-    .get("https://rest.coinapi.io/v1/exchangerate/BTC/USD", config)
-    .then((res2) => {
-      console.log(res2.data);
-      // Store in db
-      const filter = { base: "btc", quote: "usd" };
-      const update = { rate: res2.data.rate };
-      BtcExchange.findOneAndUpdate(filter, update, {
-        new: true,
-        upsert: true, // Make this update into an upsert
-      }).then((res3) => {
-        res.send(res3);
+  const { apiKey } = req.query;
+
+  if (apiKey === process.env.BACKEND_KEY) {
+    axios
+      .get("https://rest.coinapi.io/v1/exchangerate/BTC/USD", config)
+      .then((res2) => {
+        console.log(res2.data);
+        // Store in db
+        const filter = { base: "btc", quote: "usd" };
+        const update = { rate: res2.data.rate };
+        BtcExchange.findOneAndUpdate(filter, update, {
+          new: true,
+          upsert: true, // Make this update into an upsert
+        }).then((res3) => {
+          res.send(res3);
+        });
+      })
+      .catch((err) => {
+        console.log("Error: ", err.message);
       });
-    })
-    .catch((err) => {
-      console.log("Error: ", err.message);
-    });
+  } else {
+    res.sendStatus(401);
+  }
 });
 
 app.post("/ethexchange", async (req, res) => {
@@ -147,23 +171,29 @@ app.post("/ethexchange", async (req, res) => {
       "X-CoinAPI-Key": COINAPI_APIKEY,
     },
   };
-  axios
-    .get("https://rest.coinapi.io/v1/exchangerate/ETH/USD", config)
-    .then((res2) => {
-      console.log(res2.data);
-      // Store in db
-      const filter = { base: "eth", quote: "usd" };
-      const update = { rate: res2.data.rate };
-      EthExchange.findOneAndUpdate(filter, update, {
-        new: true,
-        upsert: true, // Make this update into an upsert
-      }).then((res3) => {
-        res.send(res3);
+  const { apiKey } = req.query;
+
+  if (apiKey === process.env.BACKEND_KEY) {
+    axios
+      .get("https://rest.coinapi.io/v1/exchangerate/ETH/USD", config)
+      .then((res2) => {
+        console.log(res2.data);
+        // Store in db
+        const filter = { base: "eth", quote: "usd" };
+        const update = { rate: res2.data.rate };
+        EthExchange.findOneAndUpdate(filter, update, {
+          new: true,
+          upsert: true, // Make this update into an upsert
+        }).then((res3) => {
+          res.send(res3);
+        });
+      })
+      .catch((err) => {
+        console.log("Error: ", err.message);
       });
-    })
-    .catch((err) => {
-      console.log("Error: ", err.message);
-    });
+  } else {
+    res.sendStatus(401);
+  }
 });
 
 const server = app.listen(6001, () => {

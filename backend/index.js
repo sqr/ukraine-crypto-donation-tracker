@@ -76,7 +76,6 @@ app.post("/btc", async (req, res) => {
         "https://blockstream.info/api/address/357a3So9CbsNfBBgFYACGvxxS6tMaDoa1P"
       )
       .then((res2) => {
-        console.log(res2.data);
         // Convert response amount (in Satoshis) to Btc
         const amount_btc = satToBtc(res2.data.chain_stats.funded_txo_sum);
         const data = {

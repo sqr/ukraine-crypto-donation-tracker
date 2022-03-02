@@ -11,16 +11,16 @@ chain
   .add(
     // Query API to insert BTC data in DB
     () => {
-      axios.post(`${API_URL}/btc?apiKey=${BACKEND_KEY}`).then((res) => {
+      axios.post(`${API_URL}/btcexchange?apiKey=${BACKEND_KEY}`).then((res) => {
         console.log(res.data);
       });
     },
     // Query API to insert ETH data in DB
     () => {
-      axios.post(`${API_URL}/ethtest?apiKey=${BACKEND_KEY}`).then((res) => {
+      axios.post(`${API_URL}/ethexchange?apiKey=${BACKEND_KEY}`).then((res) => {
         console.log(res.data);
       });
     }
   )
-  // Every 5 mins
-  .every(300000);
+  // Every 60 mins
+  .every(3600000);

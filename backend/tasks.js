@@ -17,7 +17,7 @@ chain
     },
     // Query API to insert ETH data in DB
     () => {
-      axios.post(`${API_URL}/eth?apiKey=${BACKEND_KEY}`).then((res) => {
+      axios.post(`${API_URL}/ethtest?apiKey=${BACKEND_KEY}`).then((res) => {
         console.log(res.data);
       });
     }

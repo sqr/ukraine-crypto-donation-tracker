@@ -3,6 +3,7 @@ const app = express();
 const mongoose = require("mongoose");
 const { Btc, Eth, BtcExchange, EthExchange } = require("./model");
 const { satToBtc, weiToEth } = require("./conversion");
+const ethereumjs = require("ethereumjs-units");
 
 const axios = require("axios");
 const cors = require("cors");
@@ -194,6 +195,144 @@ app.post("/ethexchange", async (req, res) => {
   } else {
     res.sendStatus(401);
   }
+});
+
+///
+/// ETHEREUM TESTING FACILITY
+///
+
+app.post("/ethtest", async (req, res) => {
+  const ETHERSCAN_APIKEY = process.env.ETHERSCAN_APIKEY;
+  const lastEth = await Eth.findOne().sort({ createdAt: -1 });
+  const nextBlock = lastEth.last_block_checked
+    ? Number(lastEth.last_block_checked) + 1
+    : "0";
+  const nextBlockInternal = lastEth.last_block_checked_internal
+    ? Number(lastEth.last_block_checked_internal) + 1
+    : "0";
+  axios
+    .get(
+      `https://api.etherscan.io/api?module=account&action=txlist&address=0x165CD37b4C644C2921454429E7F9358d18A45e14&startblock=${nextBlock}&sort=asc&apikey=${ETHERSCAN_APIKEY}`
+    )
+    .then((ethres) => {
+      console.log(lastEth);
+      let dbObject = {
+        last_block_checked: BigInt(0),
+        last_block_checked_internal: lastEth.last_block_checked_internal
+          ? BigInt(lastEth.last_block_checked_internal)
+          : BigInt(0),
+        tx_vol_in: lastEth.tx_vol_in ? BigInt(lastEth.tx_vol_in) : BigInt(0),
+        tx_vol_out: lastEth.tx_vol_out ? BigInt(lastEth.tx_vol_out) : BigInt(0),
+        tx_count_in: lastEth.tx_count_in ? lastEth.tx_count_in : 0,
+        tx_count_out: lastEth.tx_count_out ? lastEth.tx_count_out : 0,
+        tx_vol_in_internal: lastEth.tx_vol_in_internal
+          ? BigInt(lastEth.tx_vol_in_internal)
+          : BigInt(0),
+        tx_vol_out_internal: lastEth.tx_vol_out_internal
+          ? BigInt(lastEth.tx_vol_out_internal)
+          : BigInt(0),
+        tx_count_in_internal: lastEth.tx_count_in_internal
+          ? lastEth.tx_count_in_internal
+          : 0,
+        tx_count_out_internal: lastEth.tx_count_out_internal
+          ? lastEth.tx_count_out_internal
+          : 0,
+      };
+      const data = ethres.data.result;
+      for (element of data) {
+        if (
+          element.to.toLowerCase() ===
+          "0x165cd37b4c644c2921454429e7f9358d18a45e14"
+        ) {
+          dbObject.tx_vol_in += BigInt(element.value);
+          dbObject.tx_count_in += 1;
+        } else if (
+          element.from.toLowerCase() ===
+          "0x165cd37b4c644c2921454429e7f9358d18a45e14"
+        ) {
+          dbObject.tx_vol_out += BigInt(element.value);
+          dbObject.tx_count_out += 1;
+        }
+      }
+      dbObject.last_block_checked = Number(data.pop().blockNumber);
+      console.log(dbObject);
+      return dbObject;
+    })
+    .then((dbObject) => {
+      axios
+        .get(
+          `https://api.etherscan.io/api?module=account&action=txlistinternal&address=0x165CD37b4C644C2921454429E7F9358d18A45e14&startblock=${nextBlockInternal}&sort=asc&apikey=${ETHERSCAN_APIKEY}`
+        )
+        .then((ethres) => {
+          const data = ethres.data.result;
+
+          if (data.length === 0) {
+            return dbObject;
+          } else {
+            for (element of data) {
+              if (
+                element.to.toLowerCase() ===
+                "0x165cd37b4c644c2921454429e7f9358d18a45e14"
+              ) {
+                dbObject.tx_vol_in_internal += BigInt(element.value);
+                dbObject.tx_count_in_internal += 1;
+              } else if (
+                element.from.toLowerCase() ===
+                "0x165cd37b4c644c2921454429e7f9358d18a45e14"
+              ) {
+                dbObject.tx_vol_out_internal += BigInt(element.value);
+                dbObject.tx_count_out_internal += 1;
+              }
+            }
+            dbObject.last_block_checked_internal = Number(
+              data.pop().blockNumber
+            );
+            console.log(dbObject);
+            //   BigInt.prototype.toJSON = function () {
+            //     return this.toString();
+            //   };
+            //   res.json(dbObject);
+            return dbObject;
+          }
+        })
+        .then((dbObject) => {
+          //   const amount_eth = weiToEth(
+          //     dbObject.tx_vol_in + dbObject.tx_vol_in_internal
+          //   );
+          const amount_eth = ethereumjs.convert(
+            dbObject.tx_vol_in + dbObject.tx_vol_in_internal,
+            "wei",
+            "eth"
+          );
+          BigInt.prototype.toJSON = function () {
+            return this.toString();
+          };
+          const data = {
+            address: "0x165CD37b4C644C2921454429E7F9358d18A45e14",
+            amount_eth: amount_eth,
+            last_block_checked: dbObject.last_block_checked,
+            last_block_checked_internal: dbObject.last_block_checked_internal,
+            tx_vol_in: dbObject.tx_vol_in,
+            tx_vol_out: dbObject.tx_vol_out,
+            tx_count_in: dbObject.tx_count_in,
+            tx_count_out: dbObject.tx_count_out,
+            tx_vol_in_internal: dbObject.tx_vol_in_internal,
+            tx_vol_out_internal: dbObject.tx_vol_out_internal,
+            tx_count_in_internal: dbObject.tx_count_in_internal,
+            tx_count_out_internal: dbObject.tx_count_out_internal,
+          };
+          Eth.insertMany(data, function (err, result) {
+            if (err) {
+              res.send(err);
+            } else {
+              res.send(result);
+            }
+          });
+        });
+    })
+    .catch((err) => {
+      console.log("Error: ", err.message);
+    });
 });
 
 const server = app.listen(6001, () => {

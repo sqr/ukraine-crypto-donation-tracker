@@ -4,7 +4,7 @@ function satToBtc(sat) {
 }
 
 function weiToEth(wei) {
-  const eth = +(wei / 1000000000000000000).toFixed(8);
+  const eth = wei / 1000000000000000000n;
   return eth;
 }
 

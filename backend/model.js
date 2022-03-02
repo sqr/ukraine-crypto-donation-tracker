@@ -24,6 +24,36 @@ let eth = new Schema(
     amount_eth: {
       type: Number,
     },
+    last_block_checked: {
+      type: String,
+    },
+    last_block_checked_internal: {
+      type: String,
+    },
+    tx_vol_in: {
+      type: String,
+    },
+    tx_vol_in_internal: {
+      type: String,
+    },
+    tx_vol_out: {
+      type: String,
+    },
+    tx_vol_out_internal: {
+      type: String,
+    },
+    tx_count_in: {
+      type: Number,
+    },
+    tx_count_in_interal: {
+      type: Number,
+    },
+    tx_count_out: {
+      type: Number,
+    },
+    tx_count_out_internal: {
+      type: Number,
+    },
   },
   { collection: "eth", timestamps: true }
 );

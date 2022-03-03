@@ -15,7 +15,7 @@ export default function Graph() {
 
   const [data, setData] = useState("");
   const [ethTotal, setEthTotal] = useState("");
-  //const [btcDonations, setBtcDonations] = useState("");
+  const [ethDonations, setEthDonations] = useState("");
 
   useEffect(() => {
     const requestOptions = {
@@ -26,7 +26,7 @@ export default function Graph() {
       .then((data) => {
         setData(data);
         setEthTotal(data[data.length - 1].amount_eth);
-        //setBtcDonations(data[data.length - 1].funded_txo_count);
+        setEthDonations(data[data.length - 1].tx_count_in);
       });
   }, [API_SERVER]);
 
@@ -42,7 +42,7 @@ export default function Graph() {
         </a>
       </h1>
       <h2>Total amount donated: {ethTotal} Ξ</h2>
-      <h2>Number of donations: coming soon</h2>
+      <h2>Number of donations: {ethDonations}</h2>
       <ResponsiveContainer width="100%" height={400}>
         <LineChart
           width={500}

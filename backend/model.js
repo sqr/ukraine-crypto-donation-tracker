@@ -86,15 +86,43 @@ let ethExchange = new Schema(
   },
   { collection: "rate" }
 );
+let erc20 = new Schema(
+  {
+    address: {
+      type: String,
+    },
+    last_block_checked: {
+      type: String,
+    },
+    amount: {
+      type: String,
+    },
+    token_name: {
+      type: String,
+    },
+    token_symbol: {
+      type: String,
+    },
+    token_decimals: {
+      type: String,
+    },
+    tx_count_in: {
+      type: Number,
+    },
+  },
+  { collection: "erc20", timestamps: true }
+);
 
 const btcSchema = mongoose.model("btc", btc);
 const ethSchema = mongoose.model("eth", eth);
+const erc20Schema = mongoose.model("erc20", erc20);
 const btcExchangeSchema = mongoose.model("btcExchange", btcExchange);
 const ethExchangeSchema = mongoose.model("ethExchange", ethExchange);
 
 module.exports = {
   Btc: btcSchema,
   Eth: ethSchema,
+  Erc20: erc20Schema,
   BtcExchange: btcExchangeSchema,
   EthExchange: ethExchangeSchema,
 };

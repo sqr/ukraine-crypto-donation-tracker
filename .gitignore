@@ -159,3 +159,9 @@ sketch
 
 # MongoDB Data dir
 datadir/
+
+# MongoDB Backup
+dump/
+
+# File for testing stuff and having fun
+pruebas.js

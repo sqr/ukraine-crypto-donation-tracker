@@ -1,7 +1,7 @@
 const express = require("express");
 const app = express();
 const mongoose = require("mongoose");
-const { Btc, Eth, BtcExchange, EthExchange } = require("./model");
+const { Btc, Eth, Erc20, BtcExchange, EthExchange } = require("./model");
 const { satToBtc, weiToEth } = require("./conversion");
 const ethereumjs = require("ethereumjs-units");
 
@@ -100,107 +100,6 @@ app.post("/btc", async (req, res) => {
 });
 
 app.post("/eth", async (req, res) => {
-  const ETHERSCAN_APIKEY = process.env.ETHERSCAN_APIKEY;
-  const { apiKey } = req.query;
-
-  if (apiKey === process.env.BACKEND_KEY) {
-    axios
-      .get(
-        `https://api.etherscan.io/api?module=account&action=balance&address=0x165CD37b4C644C2921454429E7F9358d18A45e14&tag=latest&apikey=${ETHERSCAN_APIKEY}`
-      )
-      .then((res2) => {
-        console.log(res2.data);
-        // Convert response amount (in wei) to Eth
-        const amount_eth = weiToEth(res2.data.result);
-        const data = {
-          address: "0x165CD37b4C644C2921454429E7F9358d18A45e14",
-          amount_eth: amount_eth,
-        };
-        Eth.insertMany(data, function (err, result) {
-          if (err) {
-            res.send(err);
-          } else {
-            res.send(result);
-          }
-        });
-      })
-      .catch((err) => {
-        console.log("Error: ", err.message);
-      });
-  } else {
-    res.sendStatus(401);
-  }
-});
-
-app.post("/btcexchange", async (req, res) => {
-  const COINAPI_APIKEY = process.env.COINAPI_APIKEY;
-  let config = {
-    headers: {
-      "X-CoinAPI-Key": COINAPI_APIKEY,
-    },
-  };
-  const { apiKey } = req.query;
-
-  if (apiKey === process.env.BACKEND_KEY) {
-    axios
-      .get("https://rest.coinapi.io/v1/exchangerate/BTC/USD", config)
-      .then((res2) => {
-        console.log(res2.data);
-        // Store in db
-        const filter = { base: "btc", quote: "usd" };
-        const update = { rate: res2.data.rate };
-        BtcExchange.findOneAndUpdate(filter, update, {
-          new: true,
-          upsert: true, // Make this update into an upsert
-        }).then((res3) => {
-          res.send(res3);
-        });
-      })
-      .catch((err) => {
-        console.log("Error: ", err.message);
-      });
-  } else {
-    res.sendStatus(401);
-  }
-});
-
-app.post("/ethexchange", async (req, res) => {
-  const COINAPI_APIKEY = process.env.COINAPI_APIKEY;
-  let config = {
-    headers: {
-      "X-CoinAPI-Key": COINAPI_APIKEY,
-    },
-  };
-  const { apiKey } = req.query;
-
-  if (apiKey === process.env.BACKEND_KEY) {
-    axios
-      .get("https://rest.coinapi.io/v1/exchangerate/ETH/USD", config)
-      .then((res2) => {
-        console.log(res2.data);
-        // Store in db
-        const filter = { base: "eth", quote: "usd" };
-        const update = { rate: res2.data.rate };
-        EthExchange.findOneAndUpdate(filter, update, {
-          new: true,
-          upsert: true, // Make this update into an upsert
-        }).then((res3) => {
-          res.send(res3);
-        });
-      })
-      .catch((err) => {
-        console.log("Error: ", err.message);
-      });
-  } else {
-    res.sendStatus(401);
-  }
-});
-
-///
-/// ETHEREUM TESTING FACILITY
-///
-
-app.post("/ethtest", async (req, res) => {
   const ETHERSCAN_APIKEY = process.env.ETHERSCAN_APIKEY;
   const { apiKey } = req.query;
 
@@ -342,9 +241,201 @@ app.post("/ethtest", async (req, res) => {
   }
 });
 
+app.post("/erc20", async (req, res) => {
+  const ETHERSCAN_APIKEY = process.env.ETHERSCAN_APIKEY;
+  const { apiKey } = req.query;
+  if (apiKey === process.env.BACKEND_KEY) {
+    // Primero buscar si existe ultimo bloque, sorteando por last block checked
+    const lastERC20 = await Erc20.findOne().sort({ last_block_checked: -1 });
+    const nextBlock = Number(lastERC20?.last_block_checked) + 1 || "0";
+    console.log(nextBlock);
+    axios
+      .get(
+        `https://api.etherscan.io/api?module=account&action=tokentx&address=0x165CD37b4C644C2921454429E7F9358d18A45e14&startblock=${nextBlock}&sort=asc&apikey=${ETHERSCAN_APIKEY}`
+      )
+      .then((apires) => {
+        let savedTokens = [];
+        // Iterate over every single item of the response
+        for (txIndex in apires.data.result) {
+          //console.log(apires.data.result)
+          let tx = apires.data.result[txIndex];
+          // If the target address matches Ukraine's address, we want to record this transaction
+          // console.log(tx)
+          if (tx.to === "0x165cd37b4c644c2921454429e7f9358d18a45e14") {
+            // If the current transaction's token is already present in savedTokens
+            let currentToken = savedTokens.find((token, i) => {
+              if (token.token_name === tx.tokenName) {
+                // console.log(token);
+                // console.log(savedTokens);
+                // console.log(i);
+                savedTokens[i] = {
+                  address: token.address,
+                  token_name: token.token_name,
+                  token_symbol: token.token_symbol,
+                  token_decimals: token.token_decimals,
+                  amount: BigInt(token.amount) + BigInt(tx.value),
+                  tx_count_in: token.tx_count_in + 1,
+                  last_block_checked: tx.blockNumber,
+                };
+                return true;
+              }
+            });
+            // Add the current amount to already existing object in savedTokens
+            if (currentToken === undefined) {
+              // If the current transaction's token is NOT  in savedTokens, this is our first transaction of this token
+              let {
+                blockNumber,
+                value,
+                tokenName,
+                tokenSymbol,
+                tokenDecimal,
+                to,
+              } = tx;
+              // Create a new intermediate object with all relevant info (token name, symbol, etc) and push it to savedTokens
+              savedTokens.push({
+                address: to,
+                last_block_checked: blockNumber,
+                token_name: tokenName,
+                token_symbol: tokenSymbol,
+                token_decimals: tokenDecimal,
+                amount: value,
+                tx_count_in: 1,
+              });
+            } else {
+              // let { value, index, last_block_checked } = currentToken
+              // //console.log(savedTokens)
+              // BigInt(savedTokens[index].amount) += BigInt(value);
+              // savedTokens[index].tx_count_in += 1
+              // savedTokens[index].last_block_checked = last_block_checked
+            }
+          }
+        }
+        console.log(savedTokens);
+        // Erc.insertMany(data, function (err, result) {
+        //   if (err) {
+        //     res.send(err);
+        //   } else {
+        //     res.send(result);
+        //   }
+        // });
+        BigInt.prototype.toJSON = function () {
+          return this.toString();
+        };
+        // Volvemos a hacer una query a la bbdd, pedimos todos los documentos
+        // Iteramos uno por uno, si el valor de token_symbol coincide con alguno ya metido, updateamos sumando el valor ya existente en la bbdd al de nuestro array provisional
+        // Si el valor de token symbol no existe en bbdd, lo añadimos con los valores pelaos
+        res.json(savedTokens);
+      })
+      .catch((err) => {
+        console.log("Error: ", err.message);
+      });
+  } else {
+    res.sendStatus(401);
+  }
+});
+
+app.post("/btcexchange", async (req, res) => {
+  const COINAPI_APIKEY = process.env.COINAPI_APIKEY;
+  let config = {
+    headers: {
+      "X-CoinAPI-Key": COINAPI_APIKEY,
+    },
+  };
+  const { apiKey } = req.query;
+
+  if (apiKey === process.env.BACKEND_KEY) {
+    axios
+      .get("https://rest.coinapi.io/v1/exchangerate/BTC/USD", config)
+      .then((res2) => {
+        console.log(res2.data);
+        // Store in db
+        const filter = { base: "btc", quote: "usd" };
+        const update = { rate: res2.data.rate };
+        BtcExchange.findOneAndUpdate(filter, update, {
+          new: true,
+          upsert: true, // Make this update into an upsert
+        }).then((res3) => {
+          res.send(res3);
+        });
+      })
+      .catch((err) => {
+        console.log("Error: ", err.message);
+      });
+  } else {
+    res.sendStatus(401);
+  }
+});
+
+app.post("/ethexchange", async (req, res) => {
+  const COINAPI_APIKEY = process.env.COINAPI_APIKEY;
+  let config = {
+    headers: {
+      "X-CoinAPI-Key": COINAPI_APIKEY,
+    },
+  };
+  const { apiKey } = req.query;
+
+  if (apiKey === process.env.BACKEND_KEY) {
+    axios
+      .get("https://rest.coinapi.io/v1/exchangerate/ETH/USD", config)
+      .then((res2) => {
+        console.log(res2.data);
+        // Store in db
+        const filter = { base: "eth", quote: "usd" };
+        const update = { rate: res2.data.rate };
+        EthExchange.findOneAndUpdate(filter, update, {
+          new: true,
+          upsert: true, // Make this update into an upsert
+        }).then((res3) => {
+          res.send(res3);
+        });
+      })
+      .catch((err) => {
+        console.log("Error: ", err.message);
+      });
+  } else {
+    res.sendStatus(401);
+  }
+});
+
 const server = app.listen(6001, () => {
   const host = server.address().address;
   const port = server.address().port;
 
   console.log("Listening on %s port %s", host, port);
 });
+
+// Old Eth route
+
+// app.post("/eth", async (req, res) => {
+//   const ETHERSCAN_APIKEY = process.env.ETHERSCAN_APIKEY;
+//   const { apiKey } = req.query;
+
+//   if (apiKey === process.env.BACKEND_KEY) {
+//     axios
+//       .get(
+//         `https://api.etherscan.io/api?module=account&action=balance&address=0x165CD37b4C644C2921454429E7F9358d18A45e14&tag=latest&apikey=${ETHERSCAN_APIKEY}`
+//       )
+//       .then((res2) => {
+//         console.log(res2.data);
+//         // Convert response amount (in wei) to Eth
+//         const amount_eth = weiToEth(res2.data.result);
+//         const data = {
+//           address: "0x165CD37b4C644C2921454429E7F9358d18A45e14",
+//           amount_eth: amount_eth,
+//         };
+//         Eth.insertMany(data, function (err, result) {
+//           if (err) {
+//             res.send(err);
+//           } else {
+//             res.send(result);
+//           }
+//         });
+//       })
+//       .catch((err) => {
+//         console.log("Error: ", err.message);
+//       });
+//   } else {
+//     res.sendStatus(401);
+//   }
+// });

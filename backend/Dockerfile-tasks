@@ -8,4 +8,4 @@ RUN npm i
 
 COPY . .
 
-CMD ["/bin/sh", "/app/tasks.sh"]
+ENTRYPOINT ["node", "/app/tasks.js"]

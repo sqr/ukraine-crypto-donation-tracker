@@ -168,7 +168,6 @@ app.post("/eth", async (req, res) => {
           )
           .then((ethres) => {
             const data = ethres.data.result;
-
             if (data.length === 0) {
               return dbObject;
             } else {

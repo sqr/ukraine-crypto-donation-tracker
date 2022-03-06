@@ -70,7 +70,7 @@ let btcExchange = new Schema(
       type: Number,
     },
   },
-  { collection: "rate" }
+  { collection: "rate", timestamps: true }
 );
 let ethExchange = new Schema(
   {
@@ -84,7 +84,7 @@ let ethExchange = new Schema(
       type: Number,
     },
   },
-  { collection: "rate" }
+  { collection: "rate", timestamps: true }
 );
 let erc20 = new Schema(
   {

@@ -310,14 +310,48 @@ app.post("/erc20", async (req, res) => {
             }
           }
         }
-        console.log(savedTokens);
-        // Erc.insertMany(data, function (err, result) {
-        //   if (err) {
-        //     res.send(err);
-        //   } else {
-        //     res.send(result);
-        //   }
-        // });
+        //console.log(savedTokens);
+        for (token in savedTokens) {
+          console.log(token);
+          const dataForDb = await Erc20.findOne({
+            token_symbol: savedTokens[token].token_symbol,
+          });
+          // .then((dbToken) => {
+          //   if (dbToken) {
+          // const filter = { token_symbol: dbToken.token_symbol };
+          // const updatedAmount =
+          //   BigInt(dbToken.amount) + BigInt(savedTokens[token].amount);
+          // const updatedToken = {
+          //   address: dbToken.address,
+          //   last_block_checked: savedTokens[token].last_block_checked,
+          //   token_name: dbToken.token_name,
+          //   token_symbol: dbToken.token_symbol,
+          //   token_decimals: dbToken.token_decimals,
+          //   amount: updatedAmount.toString(),
+          //   tx_count_in:
+          //     dbToken.tx_count_in + savedTokens[token].tx_count_in,
+          // };
+          // Erc20.updateOne(filter, updatedToken);
+          //     return dbToken;
+          //   } else {
+          //     return `Token ${savedTokens[token].token_symbol} not found`;
+          //console.log(token);
+          //console.log(savedTokens[token]);
+          // Erc20.insertMany(savedTokens[token], function (err, result) {
+          //   if (err) {
+          //     console.error(err);
+          //   } else {
+          //     console.log(result);
+          //   }
+          // });
+          //   }
+          // })
+          // .catch((err) => {
+          //   console.error(err);
+          // });
+
+          console.log(dataForDb);
+        }
         BigInt.prototype.toJSON = function () {
           return this.toString();
         };

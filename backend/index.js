@@ -105,18 +105,13 @@ app.post("/eth", async (req, res) => {
 
   if (apiKey === process.env.BACKEND_KEY) {
     const lastEth = await Eth.findOne().sort({ createdAt: -1 });
-    const nextBlock = lastEth.last_block_checked
-      ? Number(lastEth.last_block_checked) + 1
-      : "0";
-    const nextBlockInternal = lastEth.last_block_checked_internal
-      ? Number(lastEth.last_block_checked_internal) + 1
-      : "0";
+    const nextBlock = Number(lastEth.last_block_checked) + 1;
+    const nextBlockInternal = Number(lastEth.last_block_checked_internal) + 1;
     axios
       .get(
         `https://api.etherscan.io/api?module=account&action=txlist&address=0x165CD37b4C644C2921454429E7F9358d18A45e14&startblock=${nextBlock}&sort=asc&apikey=${ETHERSCAN_APIKEY}`
       )
       .then((ethres) => {
-        console.log(lastEth);
         let dbObject = {
           last_block_checked: BigInt(0),
           last_block_checked_internal: lastEth.last_block_checked_internal
@@ -158,7 +153,6 @@ app.post("/eth", async (req, res) => {
           }
         }
         dbObject.last_block_checked = Number(data.pop().blockNumber);
-        console.log(dbObject);
         return dbObject;
       })
       .then((dbObject) => {
@@ -189,7 +183,6 @@ app.post("/eth", async (req, res) => {
               dbObject.last_block_checked_internal = Number(
                 data.pop().blockNumber
               );
-              console.log(dbObject);
               //   BigInt.prototype.toJSON = function () {
               //     return this.toString();
               //   };

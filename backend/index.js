@@ -241,128 +241,101 @@ app.post("/eth", async (req, res) => {
   }
 });
 
+const getNextBlock = async () => {
+  try {
+    const lastERC20 = await Erc20.findOne().sort({ last_block_checked: -1 });
+    const nextBlock = Number(lastERC20?.last_block_checked) + 1 || "0";
+    return nextBlock;
+  } catch (error) {
+    console.error(`Error setting Next Block: ${error}`);
+  }
+};
+
 app.post("/erc20", async (req, res) => {
   const ETHERSCAN_APIKEY = process.env.ETHERSCAN_APIKEY;
   const { apiKey } = req.query;
   if (apiKey === process.env.BACKEND_KEY) {
-    // Primero buscar si existe ultimo bloque, sorteando por last block checked
-    const lastERC20 = await Erc20.findOne().sort({ last_block_checked: -1 });
-    const nextBlock = Number(lastERC20?.last_block_checked) + 1 || "0";
-    console.log(nextBlock);
-    axios
-      .get(
+    const nextBlock = await getNextBlock();
+    try {
+      const apires = await axios.get(
         `https://api.etherscan.io/api?module=account&action=tokentx&address=0x165CD37b4C644C2921454429E7F9358d18A45e14&startblock=${nextBlock}&sort=asc&apikey=${ETHERSCAN_APIKEY}`
-      )
-      .then((apires) => {
-        let savedTokens = [];
-        // Iterate over every single item of the response
-        for (txIndex in apires.data.result) {
-          //console.log(apires.data.result)
-          let tx = apires.data.result[txIndex];
-          // If the target address matches Ukraine's address, we want to record this transaction
-          // console.log(tx)
-          if (tx.to === "0x165cd37b4c644c2921454429e7f9358d18a45e14") {
-            // If the current transaction's token is already present in savedTokens
-            let currentToken = savedTokens.find((token, i) => {
-              if (token.token_name === tx.tokenName) {
-                // console.log(token);
-                // console.log(savedTokens);
-                // console.log(i);
-                savedTokens[i] = {
-                  address: token.address,
-                  token_name: token.token_name,
-                  token_symbol: token.token_symbol,
-                  token_decimals: token.token_decimals,
-                  amount: BigInt(token.amount) + BigInt(tx.value),
-                  tx_count_in: token.tx_count_in + 1,
-                  last_block_checked: tx.blockNumber,
-                };
-                return true;
-              }
-            });
-            // Add the current amount to already existing object in savedTokens
-            if (currentToken === undefined) {
-              // If the current transaction's token is NOT  in savedTokens, this is our first transaction of this token
-              let {
-                blockNumber,
-                value,
-                tokenName,
-                tokenSymbol,
-                tokenDecimal,
-                to,
-              } = tx;
-              // Create a new intermediate object with all relevant info (token name, symbol, etc) and push it to savedTokens
-              savedTokens.push({
-                address: to,
-                last_block_checked: blockNumber,
-                token_name: tokenName,
-                token_symbol: tokenSymbol,
-                token_decimals: tokenDecimal,
-                amount: value,
-                tx_count_in: 1,
-              });
-            } else {
-              // let { value, index, last_block_checked } = currentToken
-              // //console.log(savedTokens)
-              // BigInt(savedTokens[index].amount) += BigInt(value);
-              // savedTokens[index].tx_count_in += 1
-              // savedTokens[index].last_block_checked = last_block_checked
+      );
+      let savedTokens = [];
+      for (txIndex in apires.data.result) {
+        let tx = apires.data.result[txIndex];
+        if (tx.to === "0x165cd37b4c644c2921454429e7f9358d18a45e14") {
+          let currentToken = savedTokens.find((token, i) => {
+            if (token.token_name === tx.tokenName) {
+              savedTokens[i] = {
+                address: token.address,
+                token_name: token.token_name,
+                token_symbol: token.token_symbol,
+                token_decimals: token.token_decimals,
+                amount: (BigInt(token.amount) + BigInt(tx.value)).toString(),
+                tx_count_in: token.tx_count_in + 1,
+                last_block_checked: tx.blockNumber,
+              };
+              return true;
             }
+          });
+          // Add the current amount to already existing object in savedTokens
+          if (currentToken === undefined) {
+            // If the current transaction's token is NOT  in savedTokens, this is our first transaction of this token
+            let {
+              blockNumber,
+              value,
+              tokenName,
+              tokenSymbol,
+              tokenDecimal,
+              to,
+            } = tx;
+            // Create a new intermediate object with all relevant info (token name, symbol, etc) and push it to savedTokens
+            savedTokens.push({
+              address: to,
+              last_block_checked: blockNumber,
+              token_name: tokenName,
+              token_symbol: tokenSymbol,
+              token_decimals: tokenDecimal,
+              amount: value.toString(),
+              tx_count_in: 1,
+            });
           }
         }
-        //console.log(savedTokens);
-        for (token in savedTokens) {
-          console.log(token);
-          const dataForDb = await Erc20.findOne({
-            token_symbol: savedTokens[token].token_symbol,
-          });
-          // .then((dbToken) => {
-          //   if (dbToken) {
-          // const filter = { token_symbol: dbToken.token_symbol };
-          // const updatedAmount =
-          //   BigInt(dbToken.amount) + BigInt(savedTokens[token].amount);
-          // const updatedToken = {
-          //   address: dbToken.address,
-          //   last_block_checked: savedTokens[token].last_block_checked,
-          //   token_name: dbToken.token_name,
-          //   token_symbol: dbToken.token_symbol,
-          //   token_decimals: dbToken.token_decimals,
-          //   amount: updatedAmount.toString(),
-          //   tx_count_in:
-          //     dbToken.tx_count_in + savedTokens[token].tx_count_in,
-          // };
-          // Erc20.updateOne(filter, updatedToken);
-          //     return dbToken;
-          //   } else {
-          //     return `Token ${savedTokens[token].token_symbol} not found`;
-          //console.log(token);
-          //console.log(savedTokens[token]);
-          // Erc20.insertMany(savedTokens[token], function (err, result) {
-          //   if (err) {
-          //     console.error(err);
-          //   } else {
-          //     console.log(result);
-          //   }
-          // });
-          //   }
-          // })
-          // .catch((err) => {
-          //   console.error(err);
-          // });
-
-          console.log(dataForDb);
-        }
-        BigInt.prototype.toJSON = function () {
-          return this.toString();
-        };
-        // Volvemos a hacer una query a la bbdd, pedimos todos los documentos
-        // Iteramos uno por uno, si el valor de token_symbol coincide con alguno ya metido, updateamos sumando el valor ya existente en la bbdd al de nuestro array provisional
-        // Si el valor de token symbol no existe en bbdd, lo añadimos con los valores pelaos
-        res.json(savedTokens);
-      })
-      .catch((err) => {
-        console.log("Error: ", err.message);
-      });
+      }
+      for (token in savedTokens) {
+        const dataForDb = await Erc20.findOne({
+          token_symbol: savedTokens[token].token_symbol,
+        }).then((dbToken) => {
+          if (dbToken) {
+            return {
+              address: dbToken.address,
+              last_block_checked: savedTokens[token].last_block_checked,
+              token_name: dbToken.token_name,
+              token_symbol: dbToken.token_symbol,
+              token_decimals: dbToken.token_decimals,
+              amount: (
+                BigInt(dbToken.amount) + BigInt(savedTokens[token].amount)
+              ).toString(),
+              tx_count_in: dbToken.tx_count_in + savedTokens[token].tx_count_in,
+            };
+          } else {
+            return savedTokens[token];
+          }
+        });
+        const filter = { token_symbol: savedTokens[token].token_symbol };
+        Erc20.findOneAndUpdate(filter, dataForDb, {
+          new: true,
+          upsert: true,
+        }).then((res3) => {
+          //console.log(res3);
+        });
+      }
+      console.log(`${savedTokens.length} ERC20 tokens saved to DB`);
+      res.json({ message: `${savedTokens.length} ERC20 tokens saved to DB` });
+    } catch (error) {
+      console.error(`Error saving ERC20 tokens: ${error}`);
+      res.json({ message: `Error saving ERC20 tokens: ${error}` });
+    }
   } else {
     res.sendStatus(401);
   }

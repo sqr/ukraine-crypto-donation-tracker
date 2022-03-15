@@ -13,8 +13,18 @@ services:
       - ./datadir:/data/db
     ports:
       - 27017:27017
+    networks:
+      - zelenski
   
-# frontend:
+  redis:
+    image: redis
+    command: redis-server
+    ports:
+      - 6389:6379
+    networks:
+      - zelenski
+
+  # frontend
 
   backend:
    image: backend
@@ -23,12 +33,31 @@ services:
     - 6001:6001
    depends_on:
     - mongo
+   networks:
+      - zelenski
 
-  tasks:
-   image: tasks
+  worker:
+   image: worker
    build:
     context: ./backend
-    dockerfile: Dockerfile-tasks
+    dockerfile: Dockerfile-worker
    depends_on:
     - mongo
     - backend
+   networks:
+      - zelenski
+
+  jobs:
+   image: jobs
+   build:
+    context: ./backend
+    dockerfile: Dockerfile-jobs
+   depends_on:
+    - mongo
+    - backend
+   networks:
+      - zelenski
+
+networks:
+  zelenski:
+    external: true

@@ -20,7 +20,7 @@ services:
     image: redis
     command: redis-server
     ports:
-      - 6389:6379
+      - 6389:6389
     networks:
       - zelenski
 
@@ -33,7 +33,15 @@ services:
     - 6001:6001
    depends_on:
     - mongo
+   labels:
+    - "traefik.enable=true"
+    - "traefik.http.routers.ukraine-crypto-api.rule=Host(`ukraine-crypto-api.arturobracero.com`)"
+    - "traefik.http.routers.ukraine-crypto-api.entrypoints=websecure"
+    - "traefik.http.routers.ukraine-crypto-api.tls.certresolver=myresolver"
+    - "traefik.http.services.ukraine-crypto-api.loadbalancer.server.port=6001"
+    - "traefik.docker.network=traefik"
    networks:
+      - traefik
       - zelenski
 
   worker:
@@ -60,4 +68,6 @@ services:
 
 networks:
   zelenski:
+    external: true
+  traefik:
     external: true

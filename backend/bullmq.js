@@ -2,7 +2,7 @@ const { Queue, QueueScheduler } = require("bullmq");
 
 const myConnection = {
   connection: {
-    host: "ukraine-crypto-donations-tracker_redis_1",
+    host: "ukraine-crypto-donation-tracker_redis_1",
     port: 6389,
   },
 };

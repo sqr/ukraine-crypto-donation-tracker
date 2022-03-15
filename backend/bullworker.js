@@ -10,7 +10,7 @@ const worker = new Worker(
   {
     connection: {
       host: "ukraine-crypto-donations-tracker_redis_1",
-      port: 6379,
+      port: 6389,
     },
   }
 );

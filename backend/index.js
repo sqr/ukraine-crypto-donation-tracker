@@ -4,6 +4,7 @@ const mongoose = require("mongoose");
 const { Btc, Eth, Erc20, BtcExchange, EthExchange } = require("./model");
 const { satToBtc, weiToEth } = require("./conversion");
 const ethereumjs = require("ethereumjs-units");
+const { reduceCrypto } = require("./utils");
 
 const axios = require("axios");
 const cors = require("cors");
@@ -50,12 +51,15 @@ app.get("/total", async (req, res) => {
 
 app.get("/btc", async (req, res) => {
   const allBtc = await Btc.find();
-  res.json(allBtc);
+  console.log(allBtc);
+  const hourlyBtc = reduceCrypto(allBtc);
+  res.json(hourlyBtc);
 });
 
 app.get("/eth", async (req, res) => {
   const allEth = await Eth.find();
-  res.json(allEth);
+  const hourlyEth = reduceCrypto(allEth);
+  res.json(hourlyEth);
 });
 
 app.get("/pruebakey", async (req, res) => {

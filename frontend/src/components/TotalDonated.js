@@ -3,7 +3,13 @@ import React, { useState, useEffect } from "react";
 export default function TotalDonated() {
   const API_SERVER = process.env.REACT_APP_API_URL;
 
-  const [data, setData] = useState({ eth: 0, btc: 0, total: 0 });
+  const [data, setData] = useState({
+    eth: 0,
+    btc: 0,
+    total: 0,
+    usdt: 0,
+    usdc: 0,
+  });
 
   useEffect(() => {
     const requestOptions = {

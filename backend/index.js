@@ -36,15 +36,24 @@ app.get("/test", (req, res) => {
 });
 
 app.get("/total", async (req, res) => {
+  const totalUSDT = await Erc20.findOne({ token_symbol: "USDT" });
+  const totalUSDC = await Erc20.findOne({ token_symbol: "USDC" });
   const totalBtc = await Btc.findOne().sort({ createdAt: -1 });
   const totalEth = await Eth.findOne().sort({ createdAt: -1 });
   const rateBtc = await BtcExchange.findOne({ base: "btc" });
   const rateEth = await EthExchange.findOne({ base: "eth" });
+  const usdtDollars = Number(totalUSDT.amount.slice(0, -6));
+  const usdcDollars = Number(totalUSDC.amount.slice(0, -6));
   const usdDonations = {
     btc: totalBtc.amount_btc * rateBtc.rate,
     eth: totalEth.amount_eth * rateEth.rate,
+    usdt: usdtDollars,
+    usdc: usdcDollars,
     total:
-      totalBtc.amount_btc * rateBtc.rate + totalEth.amount_eth * rateEth.rate,
+      totalBtc.amount_btc * rateBtc.rate +
+      totalEth.amount_eth * rateEth.rate +
+      usdtDollars +
+      usdcDollars,
   };
   res.json(usdDonations);
 });
@@ -60,6 +69,11 @@ app.get("/eth", async (req, res) => {
   const allEth = await Eth.find();
   const hourlyEth = reduceCrypto(allEth);
   res.json(hourlyEth);
+});
+
+app.get("/erc20", async (req, res) => {
+  const allErc20 = await Erc20.find();
+  res.json(allErc20);
 });
 
 app.get("/pruebakey", async (req, res) => {

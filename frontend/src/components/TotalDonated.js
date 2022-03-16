@@ -36,6 +36,18 @@ export default function TotalDonated() {
           {data.eth.toLocaleString(undefined, { maximumFractionDigits: 2 })}
         </h3>
       </div>
+      <div className="center">
+        <h3>
+          USDT Donated: $
+          {data.usdt.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+        </h3>
+      </div>
+      <div className="center">
+        <h3>
+          USDC Donated: $
+          {data.usdc.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+        </h3>
+      </div>
     </div>
   );
 }

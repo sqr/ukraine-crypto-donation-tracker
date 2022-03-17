@@ -76,6 +76,25 @@ app.get("/erc20", async (req, res) => {
   res.json(allErc20);
 });
 
+app.get("/erc20/table", async (req, res) => {
+  const allErc20 = await Erc20.find();
+  let table = [];
+  for (token in allErc20) {
+    const amountNoDecimals = allErc20[token].amount.slice(
+      0,
+      -1 * allErc20[token].token_decimals
+    );
+    const row = {
+      name: allErc20[token].token_name,
+      symbol: allErc20[token].token_symbol,
+      amount: amountNoDecimals,
+      txnumber: allErc20[token].tx_count_in,
+    };
+    table.push(row);
+  }
+  res.json(table);
+});
+
 app.get("/pruebakey", async (req, res) => {
   const { apiKey } = req.query;
   if (apiKey === process.env.BACKEND_KEY) {

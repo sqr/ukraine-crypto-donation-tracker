@@ -36,3 +36,55 @@
     transform: rotate(360deg);
   }
 }
+
+table.table {
+  margin-top: 10px;
+  width: 600px;
+  color: white;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+}
+
+table.table tbody tr:nth-child(even) {
+  background-color: #1d1d1d;
+}
+
+table.table tbody tr:hover {
+  background-color: #282c34;
+}
+
+table.table th {
+  padding: 10px 10px;
+}
+
+table.table td {
+  padding: 10px 10px 10px 10px;
+}
+
+table.table th {
+  background-color: black;
+}
+
+table.table td:nth-child(2) {
+  text-align: center;
+  font-weight: bold;
+}
+
+table.table td:nth-child(3) {
+  text-align: end;
+}
+
+table.table td:nth-child(4) {
+  text-align: end;
+}
+
+.pagination {
+  padding-top: 10px;
+}
+
+table.donations {
+  width: 300px;
+}
+
+table.donations td:nth-child(2) {
+  text-align: end;
+}

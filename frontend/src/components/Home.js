@@ -2,8 +2,7 @@ import React from "react";
 import GraphBtc from "./GraphBtc";
 import GraphEth from "./GraphEth";
 import TotalDonated from "./TotalDonated";
-
-import { TwitterTweetEmbed } from "react-twitter-embed";
+import Erc20Table from "./Erc20Table";
 
 export default function Home() {
   return (
@@ -16,14 +15,8 @@ export default function Home() {
         <GraphEth />
       </div>
       <div className="center">
-        <h2>Always double check target addresses when donating.</h2>
-        <div className="tweet">
-          <TwitterTweetEmbed
-            tweetId={"1497594592438497282"}
-            width="1000px"
-            options={{ theme: "dark" }}
-          />
-        </div>
+        <h2>ERC20 Tokens Transfered</h2>
+        <Erc20Table />
       </div>
     </div>
   );

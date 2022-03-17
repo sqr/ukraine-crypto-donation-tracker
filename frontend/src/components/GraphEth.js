@@ -74,7 +74,10 @@ export default function Graph() {
             tickFormatter={(value) => value.toFixed(4)}
             stroke="white"
           />
-          <Tooltip />
+          <Tooltip
+            contentStyle={{ backgroundColor: "#282c34" }}
+            cursor={{ stroke: "white", strokeWidth: 1 }}
+          />
           <Legend />
           <Line
             name="ETH"

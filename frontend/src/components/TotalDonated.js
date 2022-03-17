@@ -23,7 +23,7 @@ export default function TotalDonated() {
   }, [API_SERVER]);
   return (
     <div>
-      <h1>🇺🇦 Ukrania crypto donation tracker</h1>
+      <h1>🇺🇦 Ukraine crypto donation tracker</h1>
       <div className="center">
         <h1>
           Total Donated: $
@@ -31,28 +31,62 @@ export default function TotalDonated() {
         </h1>
       </div>
       <div className="center">
-        <h3>
-          BTC Donated: $
-          {data.btc.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-        </h3>
-      </div>
-      <div className="center">
-        <h3>
-          ETH Donated: $
-          {data.eth.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-        </h3>
-      </div>
-      <div className="center">
-        <h3>
-          USDT Donated: $
-          {data.usdt.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-        </h3>
-      </div>
-      <div className="center">
-        <h3>
-          USDC Donated: $
-          {data.usdc.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-        </h3>
+        <table className="donations">
+          <tbody>
+            <tr>
+              <td>
+                <h3>ETH Donated:</h3>
+              </td>
+              <td>
+                <h3>
+                  $
+                  {data.eth.toLocaleString(undefined, {
+                    maximumFractionDigits: 2,
+                  })}
+                </h3>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <h3>BTC Donated:</h3>
+              </td>
+              <td>
+                <h3>
+                  $
+                  {data.btc.toLocaleString(undefined, {
+                    maximumFractionDigits: 2,
+                  })}
+                </h3>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <h3>USDT Donated:</h3>
+              </td>
+              <td>
+                <h3>
+                  $
+                  {data.usdt.toLocaleString(undefined, {
+                    maximumFractionDigits: 2,
+                  })}
+                </h3>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <h3>USDC Donated:</h3>
+              </td>
+              <td>
+                <h3>
+                  $
+                  {data.usdc.toLocaleString(undefined, {
+                    maximumFractionDigits: 2,
+                  })}
+                </h3>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   );

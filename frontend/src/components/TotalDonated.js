@@ -23,7 +23,17 @@ export default function TotalDonated() {
   }, [API_SERVER]);
   return (
     <div>
-      <h1>🇺🇦 Ukraine crypto donation tracker</h1>
+      <h1>
+        🇺🇦 Ukraine crypto donation tracker (src on{" "}
+        <a
+          href="https://github.com/sqr/ukraine-crypto-donation-tracker"
+          target="_blank"
+          rel="noreferrer noopener"
+        >
+          GitHub
+        </a>
+        )
+      </h1>
       <div className="center">
         <h1>
           Total Donated: $
